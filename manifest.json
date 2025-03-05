@@ -1,0 +1,30 @@
+{
+    "manifest_version": 3,
+    "name": "Kwyk Solver",
+    "description": "Donne les réponses des exercices de Kwyk",
+    "version": "1.5",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "tabs"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "host_permissions": [
+        "https://www.extension-randomize.me/*",
+        "*://*.kwyk.fr/*"
+    ],
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+    "content_security_policy": {
+        "script-src": "'self'",
+        "object-src": "'self'"
+    }
+}
