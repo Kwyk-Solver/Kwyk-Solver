@@ -1,4 +1,16 @@
+// Fonction pour envoyer des événements de télémétrie
+function trackEvent(eventType, eventData = {}) {
+  chrome.runtime.sendMessage({
+    type: 'telemetry',
+    eventType: eventType,
+    eventData: eventData
+  });
+}
+
 document.getElementById('fetchAnswers').addEventListener('click', function() {
+  // Enregistrer le clic sur le bouton
+  trackEvent('fetch_answers_clicked');
+
   const button = document.getElementById('fetchAnswers');
 
   const enviroment = "prod"; // prod or dev 
@@ -7,9 +19,30 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
   button.disabled = true;
   button.classList.add('loading');
   
+  // Ajout d'un timestamp pour éviter la mise en cache
+  let currentUrl = "";
+  
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     if (tabs[0]) {
-      fetch(apiEndpoint, { method: 'HEAD', mode: 'no-cors' })
+      currentUrl = tabs[0].url;
+      // Enregistrer l'URL de la page
+      trackEvent('page_info', {
+        url: currentUrl,
+        title: tabs[0].title
+      });
+      
+      // Ajouter un paramètre nocache à l'URL
+      const nocacheUrl = `${apiEndpoint}?_t=${Date.now()}`;
+      
+      fetch(nocacheUrl, { 
+        method: 'HEAD', 
+        mode: 'no-cors',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
         .then(() => {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
@@ -124,16 +157,29 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
               const questions = results[0].result;
               
               if (questions.length === 0) {
+                trackEvent('no_questions_found', { url: currentUrl });
                 alert("Aucune question trouvée sur cette page.");
                 button.disabled = false;
                 button.classList.remove('loading');
                 return;
               }
               
-              fetch(apiEndpoint, {
+              // Enregistrer le nombre de questions extraites
+              trackEvent('questions_extracted', {
+                count: questions.length,
+                url: currentUrl
+              });
+              
+              // Ajouter un paramètre nocache à l'URL
+              const nocacheUrl = `${apiEndpoint}?_t=${Date.now()}`;
+              
+              fetch(nocacheUrl, {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
                 },
                 body: JSON.stringify({ questions: questions })
               })
@@ -146,6 +192,12 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
               .then(data => {
                 button.disabled = false;
                 button.classList.remove('loading');
+                
+                // Enregistrer la réception de réponses
+                trackEvent('answers_received', {
+                  count: data.answers.length,
+                  success: true
+                });
                 
                 const answersWindow = window.open('', 'KwykSolverAnswers', 'width=600,height=600');
               
@@ -213,34 +265,66 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
                 console.error('Erreur:', error);
                 button.disabled = false;
                 button.classList.remove('loading');
+                
+                // Enregistrer l'erreur
+                trackEvent('error', {
+                  message: error.message,
+                  type: 'fetch_answers_error',
+                  url: currentUrl
+                });
+                
                 alert(`Erreur lors de la récupération des réponses: ${error.message}`);
               });
             } else {
               button.disabled = false;
               button.classList.remove('loading');
+              
+              // Enregistrer l'échec d'extraction
+              trackEvent('error', {
+                type: 'no_results',
+                url: currentUrl
+              });
             }
           });
         })
         .catch(() => {
           button.disabled = false;
           button.classList.remove('loading');
+          
+          // Enregistrer l'erreur d'API
+          trackEvent('error', {
+            type: 'api_unavailable',
+            url: currentUrl
+          });
+          
           alert("L'API Kwyk Solver n'est pas accessible.");
         });
     } else {
       button.disabled = false;
       button.classList.remove('loading');
+      
+      // Enregistrer l'erreur d'onglet
+      trackEvent('error', {
+        type: 'no_active_tab'
+      });
+      
       alert('Aucun onglet actif trouvé.');
     }
   });
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Enregistrer l'affichage du popup
+  trackEvent('popup_viewed');
+  
   const disclaimerAccepted = localStorage.getItem('disclaimerAccepted');
   const disclaimerDialog = document.getElementById('disclaimerDialog');
   const fetchAnswersButton = document.getElementById('fetchAnswers');
 
   if (!disclaimerAccepted) {
     disclaimerDialog.style.display = 'block';
+    // Enregistrer l'affichage du disclaimer
+    trackEvent('disclaimer_shown');
   } else {
     fetchAnswersButton.disabled = false;
   }
@@ -249,5 +333,8 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.setItem('disclaimerAccepted', 'true');
     disclaimerDialog.style.display = 'none';
     fetchAnswersButton.disabled = false;
+    
+    // Enregistrer l'acceptation du disclaimer
+    trackEvent('disclaimer_accepted');
   });
 });
