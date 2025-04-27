@@ -1,11 +1,10 @@
+
 <!DOCTYPE html>
 <html>
   <head>
     <title>Kwyk Solver</title>
     <meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <style>
     html, body {
@@ -49,7 +48,7 @@
         text-align: center;
         margin-bottom: 0px;
     }
-    button#fetchAnswers, button#acceptDisclaimer {
+    button#fetchAnswers {
       background-color: transparent;
       color: #4080ff;
       border: solid 1px #4080ff;
@@ -110,10 +109,19 @@
         text-align: center;
         width: 156px;
     }
+    .disclaimer-dialog button {
+      margin-top: 1rem;
+      background-color: #4080ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
   </style>
   <body>
-    <h1>Kwik Solver</h1>
-    <button id="fetchAnswers">
+    <h1>Kwyk Solver</h1>
+    <button id="fetchAnswers" disabled>
       Obtenir les réponses
       <span class="spinner"></span>
     </button>
