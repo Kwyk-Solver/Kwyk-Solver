@@ -1,15 +1,12 @@
 document.getElementById('fetchAnswers').addEventListener('click', function() {
   const button = document.getElementById('fetchAnswers');
-
-  const enviroment = "prod"; // prod or dev 
-  const apiEndpoint = enviroment === "prod" ? "https://www.extension-randomize.me/answer" : "http://localhost:5000/answer";
   
   button.disabled = true;
   button.classList.add('loading');
   
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     if (tabs[0]) {
-      fetch(apiEndpoint, { method: 'HEAD', mode: 'no-cors' })
+      fetch('http://www.extension-randomize.me/ok', { method: 'HEAD', mode: 'no-cors' })
         .then(() => {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
@@ -130,7 +127,7 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
                 return;
               }
               
-              fetch(apiEndpoint, {
+              fetch('https://www.extension-randomize.me/answer', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
@@ -189,20 +186,15 @@ document.getElementById('fetchAnswers').addEventListener('click', function() {
                           font-weight: normal;
                         }
                       </style>
-                      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-                      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
                     </head>
                     <body>
                       <h1>Kwyk Solver - Réponses</h1>
                       ${data.answers.map((answer, index) => `
                         <div class="answer">
                           <strong>Question ${index + 1}:</strong>
-                          <p>\\(${escapeHtml(answer).replace(/\n/g, '<br>')}\\)</p>
+                          <p>${escapeHtml(answer).replace(/\n/g, '<br>')}</p>
                         </div>
                       `).join('')}
-                      <script>
-                        MathJax.typeset();
-                      </script>
                     </body>
                   </html>
                 `);
